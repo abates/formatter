@@ -2,11 +2,10 @@ package formatter
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"strings"
 )
-
-type Printer interface {
-	Print(v ...interface{})
-}
 
 type Logger interface {
 	Log(v ...interface{})
@@ -14,11 +13,17 @@ type Logger interface {
 }
 
 type logger struct {
-	Logger
+	writer io.Writer
 	format Formatter
 }
 
 type LogOption func(*logger)
+
+func LogWriter(writer io.Writer) LogOption {
+	return func(cl *logger) {
+		cl.writer = writer
+	}
+}
 
 func LogFormatter(format Formatter) LogOption {
 	return func(cl *logger) {
@@ -26,9 +31,9 @@ func LogFormatter(format Formatter) LogOption {
 	}
 }
 
-func ColorLogger(l Logger, options ...LogOption) Logger {
+func ColorLogger(options ...LogOption) Logger {
 	f := &logger{
-		Logger: l,
+		writer: os.Stdout,
 		format: ContextFormatter(),
 	}
 
@@ -45,8 +50,12 @@ func (l *logger) Logf(format string, v ...interface{}) {
 func (l *logger) Log(v ...interface{}) {
 	input := fmt.Sprint(v...)
 	if s, err := l.format(input); err == nil {
-		l.Logger.Log(s)
+		if strings.HasSuffix(s, "\n") {
+			fmt.Fprint(l.writer, s)
+		} else {
+			fmt.Fprintln(l.writer, s)
+		}
 	} else {
-		l.Logger.Log(fmt.Sprintf("%s !%%ERR %v", input, err))
+		fmt.Fprintf(l.writer, "%s !%%ERR %v\n", strings.TrimSpace(input), err)
 	}
 }

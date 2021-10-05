@@ -1,19 +1,11 @@
 package formatter
 
 import (
-	"log"
 	"strings"
 	"testing"
 
 	"github.com/abates/formatter/colors"
 )
-
-type printer struct {
-	*log.Logger
-}
-
-func (p printer) Log(v ...interface{})                 { p.Print(v...) }
-func (p printer) Logf(format string, v ...interface{}) { p.Printf(format, v...) }
 
 func TestLog(t *testing.T) {
 	oldResetColor := resetColor
@@ -30,20 +22,21 @@ func TestLog(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"no tags", "some input", "some input"},
-		{"one tag", "some <em>input</em>", "some EMinputRESET"},
-		{"nested tag", "some <em>input<success>with green</success></em>", "some EMinputSUCCESSwith greenRESETEMRESET"},
+		{"no tags", "some input", "some input\n"},
+		{"one tag", "some <em>input</em>", "some EMinputRESET\n"},
+		{"nested tag", "some <em>input<success>with green</success></em>", "some EMinputSUCCESSwith greenRESETEMRESET\n"},
+		{"trailing newline", "some text\n", "some text\n"},
+		{"error", "some text<foo>\n", "some text<foo> !%ERR expected </foo>\n"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			builder := &strings.Builder{}
-			logger := log.New(builder, "", 0)
 			f := ContextFormatter()
-			l := ColorLogger(printer{logger}, LogFormatter(f))
+			l := ColorLogger(LogWriter(builder), LogFormatter(f))
 
 			l.Logf("%s", test.input)
-			got := strings.TrimSpace(builder.String())
+			got := builder.String()
 			if test.want != got {
 				t.Errorf("Wanted %q got %q", test.want, got)
 			}
