@@ -8,6 +8,13 @@ import (
 	"github.com/abates/formatter/colors"
 )
 
+type printer struct {
+	*log.Logger
+}
+
+func (p printer) Log(v ...interface{})                 { p.Print(v...) }
+func (p printer) Logf(format string, v ...interface{}) { p.Printf(format, v...) }
+
 func TestLog(t *testing.T) {
 	oldResetColor := resetColor
 	resetColor = colors.Color("RESET")
@@ -33,7 +40,7 @@ func TestLog(t *testing.T) {
 			builder := &strings.Builder{}
 			logger := log.New(builder, "", 0)
 			f := ContextFormatter()
-			l := ColorLogger(LoggerOption(logger), LogFormatter(f))
+			l := ColorLogger(printer{logger}, LogFormatter(f))
 
 			l.Logf("%s", test.input)
 			got := strings.TrimSpace(builder.String())

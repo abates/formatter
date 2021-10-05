@@ -2,8 +2,6 @@ package formatter
 
 import (
 	"fmt"
-	"log"
-	"os"
 )
 
 type Printer interface {
@@ -20,20 +18,7 @@ type logger struct {
 	format Formatter
 }
 
-type printer struct {
-	*log.Logger
-}
-
-func (p printer) Log(v ...interface{})                 { p.Print(v...) }
-func (p printer) Logf(format string, v ...interface{}) { p.Printf(format, v...) }
-
 type LogOption func(*logger)
-
-func LoggerOption(l *log.Logger) LogOption {
-	return func(cl *logger) {
-		cl.Logger = printer{l}
-	}
-}
 
 func LogFormatter(format Formatter) LogOption {
 	return func(cl *logger) {
@@ -41,9 +26,9 @@ func LogFormatter(format Formatter) LogOption {
 	}
 }
 
-func ColorLogger(options ...LogOption) Logger {
+func ColorLogger(l Logger, options ...LogOption) Logger {
 	f := &logger{
-		Logger: printer{log.New(os.Stderr, "", log.LstdFlags)},
+		Logger: l,
 		format: ContextFormatter(),
 	}
 
