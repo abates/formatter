@@ -44,18 +44,22 @@ func ColorLogger(options ...LogOption) Logger {
 }
 
 func (l *logger) Logf(format string, v ...interface{}) {
-	l.Log(fmt.Sprintf(format, v...))
-}
-
-func (l *logger) Log(v ...interface{}) {
-	input := fmt.Sprint(v...)
-	if s, err := l.format(input); err == nil {
+	f, err := l.format(format)
+	if err == nil {
+		s := fmt.Sprintf(f, v...)
 		if strings.HasSuffix(s, "\n") {
 			fmt.Fprint(l.writer, s)
 		} else {
 			fmt.Fprintln(l.writer, s)
 		}
 	} else {
-		fmt.Fprintf(l.writer, "%s !%%ERR %v\n", strings.TrimSpace(input), err)
+		// trim space to prevent a trailing newline from
+		// moving the error message to the next line
+		fmt.Fprintf(l.writer, strings.TrimSpace(format), v...)
+		fmt.Fprintf(l.writer, " !%%ERR %v\n", err)
 	}
+}
+
+func (l *logger) Log(v ...interface{}) {
+	fmt.Fprint(l.writer, v...)
 }

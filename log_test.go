@@ -35,7 +35,7 @@ func TestLog(t *testing.T) {
 			f := ContextFormatter()
 			l := ColorLogger(LogWriter(builder), LogFormatter(f))
 
-			l.Logf("%s", test.input)
+			l.Logf(test.input)
 			got := builder.String()
 			if test.want != got {
 				t.Errorf("Wanted %q got %q", test.want, got)
